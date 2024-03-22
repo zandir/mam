@@ -1,0 +1,81 @@
+import librosa
+import numpy as np
+import matplotlib.pyplot as plt
+import tensorflow as tf
+from sklearn.model_selection import train_test_split
+
+def load_audio_file(file_path, sr=16000):
+    """
+    Loads an audio file and returns its Mel-spectrogram.
+    """
+    audio, _ = librosa.load(file_path, sr=sr)
+    mel_spectrogram = librosa.feature.melspectrogram(audio, sr=sr, n_mels=128)
+    return mel_spectrogram
+
+def create_cnn_model():
+    """
+    Creates a CNN model for audio classification.
+    """
+    model = tf.keras.models.Sequential([
+        tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=(128, None, 1)),
+        tf.keras.layers.MaxPooling2D((2, 2))
+    ])
+
+    model.add(tf.keras.layers.Flatten())
+    model.add(tf.keras.layers.Dense(64, activation='relu'))
+    model.add(tf.keras.layers.Dense(1, activation='sigmoid'))
+
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+    return model
+
+def plot_mel_spectrogram(mel_spectrogram):
+    """
+    Plots a Mel-spectrogram using matplotlib.
+    """
+    plt.figure(figsize=(10, 4))
+    librosa.display.specshow(mel_spectrogram, sr=16000, x_axis='time', y_axis='mel')
+    plt.colorbar(format='%+2.0f dB')
+    plt.title('Mel-spectrogram')
+    plt.tight_layout()
+    plt.show()
+
+def train_cnn_model(model, x_train, y_train, x_val, y_val, epochs=10):
+    """
+    Trains the CNN model.
+    """
+    model.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=epochs)
+
+# Load audio files
+i = 0
+mam_phrases = []
+while (i <= 120):
+    mam_phrases[i] == "mam_phrases/p2/s" + i + ".wav" 
+    i += 1
+
+
+# Preprocess audio files
+x = [load_audio_file(file_path) for file_path in mam_phrases]
+x = [np.expand_dims(mel_spec, axis=-1) for mel_spec in x]
+x = np.stack(x, axis=0)
+
+# Create labels
+y = [0, 1, 2]  # Modify according to your dataset
+
+# Split data into training and validation sets
+x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.2)
+
+# Create CNN model
+model = create_cnn_model()
+
+# Plot Mel-spectrograms for the first 5 audio files
+for i in range(5):
+    plt.figure(figsize=(10, 4))
+    librosa.display.specshow(x[i][0], sr=16000, x_axis='time', y_axis='mel')
+    plt.colorbar(format='%+2.0f dB')
+    plt.title('Mel-spectrogram')
+    plt.tight_layout()
+    plt.show()
+
+# Train CNN model
+train_cnn_model(model, x_train, y_train, x_val, y_val)
